@@ -1,6 +1,11 @@
+#!/home/darkpydeu/Python/venv/bin/python3
 # -*- coding: utf-8 -*-
 """
 Powered by -> {-*> DarkPyDeu <*-}
+"""
+
+"""
+Файлы должны сохранятся в той же директории где и исходник
 """
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -11,6 +16,7 @@ from random import shuffle
 import os
 
 file = None
+fileDir = None
 name = None
 dir = None
 privateKey = None
@@ -278,9 +284,10 @@ def getpassword(): # генератор паролей
         ms_info("CyberCryptor", "Введите число байтов в пароле\nбайт = 1 символ")
 
 def takefileUi():  # Получение файла
-    global file
+    global file, fileDir
     try:
         file = qtOpenFile()
+        fileDir = os.path.dirname(file)
         ui.lineEdit.setText(file)
     except:
         pass
@@ -308,37 +315,24 @@ def settings_saveUi(): # сохранить настройки
        ui.pushButton_5.setToolTip("Чтобы изменить имя включите в настройках")
     SettingsDialog.close()
 
-def encryptUi(): # Шифровка файлов
+def encryptUi():
+    global name
     try:
-        password = ui.lineEdit_2.text() # получить пароль
-        bufferSize = 512 * 1024 # буфер
-        Cry.encryptFile(str(file), str(file) + ".CC", password, bufferSize) # Шифрование алгоритмом AES
+        password = ui.lineEdit_2.text()
+        bufferSize = 512 * 1024
         if name != '' and name != None:
-            os.rename(str(file) + ".CC", str(name)) # переименовка
+            fullPath = os.path.join(fileDir, name)
+            Cry.encryptFile(str(file), fullPath, password, bufferSize)
+        else:
+            fullPath = os.path.join(fileDir, str(file) + ".DC")
+            Cry.encryptFile(str(file), fullPath, password, bufferSize)
         if st.checkBox_2.isChecked():
-            savepass = open("CCSavePass.txt", "w") # созранение файла
+            savepass = open("CCSavePass.txt", "w")
             if name != "" and name != None:
                 savepass.write(f"\n {name} ::: {password}")
             else:
-                savepass.write(f"\n {file}.CC ::: {password}")
+                savepass.write(f"\n {file}.DC ::: {password}")
             savepass.close()
-        if st.checkBox_4.isChecked():
-            pass
-        else:
-            os.remove(str(file)) # удаление исходного файла
-        ui.lineEdit.clear() # очистка
-        ui.lineEdit_2.clear()
-        ms_info("CyberCryptor", "Выполнено!")
-    except:
-        ms_error("CyberCryptor", "Ошибка!")
-
-def decryptUi(): # Расщифровка
-    try:
-        passworded = ui.lineEdit_2.text()
-        bufferSize = 512 * 1024
-        Cry.decryptFile(str(file), str(os.path.splitext(str(file))[0]), passworded, bufferSize) # расшифровка
-        if name != '' and name != None:
-            os.rename(str(os.path.splitext(str(file))[0]), str(name)) # переименование
         if st.checkBox_4.isChecked():
             pass
         else:
@@ -346,14 +340,39 @@ def decryptUi(): # Расщифровка
         ui.lineEdit.clear()
         ui.lineEdit_2.clear()
         ms_info("CyberCryptor", "Выполнено!")
+        nm.lineEdit.clear()
+        name = ""
     except:
         ms_error("CyberCryptor", "Ошибка!")
 
-def decrypt_dirUi(): # расшифровка директорий
+def decryptUi():
+    global name
+    try:
+        passworded = ui.lineEdit_2.text()
+        bufferSize = 512 * 1024
+        if name != '' and name != None:
+            fullPath = os.path.join(fileDir, str(name))
+            Cry.decryptFile(str(file), fullPath, passworded, bufferSize)
+        else:
+            fullPath = os.path.join(fileDir, str(os.path.splitext(str(file))[0]))
+            Cry.decryptFile(str(file), fullPath, passworded, bufferSize)
+        if st.checkBox_4.isChecked():
+            pass
+        else:
+            os.remove(str(file))
+        ui.lineEdit.clear()
+        ui.lineEdit_2.clear()
+        ms_info("CyberCryptor", "Выполнено!")
+        nm.lineEdit.clear()
+        name = ""
+    except:
+        ms_error("CyberCryptor", "Ошибка!")
+
+def decrypt_dirUi():
     global file
     try:
-        filesindir = os.listdir(dir) # получить список файлов в директории dir
-        for filesindirs in filesindir: # перебор файлов
+        filesindir = os.listdir(dir)
+        for filesindirs in filesindir:
             path = os.path.join(filesindirs)
             file = os.path.join(str(dir), path)
             decryptUi()
@@ -414,9 +433,10 @@ def qtOpenDir(): # Диалоговое окно для открытия дир�
     return a
 
 def takefile():  # Получение файла
-    global file
+    global file, fileDir
     try:
         file = qtOpenFile()
+        fileDir = os.path.dirname(file)
         mn.lineEdit.setText(file)
     except:
         pass
@@ -430,7 +450,10 @@ def takedir():  # получение директории
         pass
 
 def takeName():
-    NameDialog.show()
+    if st.checkBox_3.isChecked():
+        NameDialog.show()
+    else:
+        ms_info("DarkCryptor", "Надо включить \"Пользовательское имя\" в настройках")
 
 def saveName():
     global name
@@ -438,6 +461,7 @@ def saveName():
     NameDialog.close()
 
 def encrypt():
+    global name
     try:
         file = mn.lineEdit.text()
         with open(file, "r") as fil:
@@ -445,11 +469,12 @@ def encrypt():
             rsa_public_key = RSA.importKey(publicKey)
             rsa_public_key = PKCS1_OAEP.new(rsa_public_key)
             encrypted_file = rsa_public_key.encrypt(crypt)
-            encrypted_file_name = f"{file}.drs"
+            if name != '' and name != None:
+                encrypted_file_name = os.path.join(fileDir, str(name))
+            else:
+                encrypted_file_name = os.path.join(fileDir, f"{file}.DC")
             with open(encrypted_file_name, "wb") as encryFile:
                 encryFile.write(encrypted_file)
-            if name != '' and name != None:
-                os.rename(f"{file}.drs", str(name))  # переименовка
             if st.checkBox_2.isChecked():
                 savepass = open("CCSavePass.txt", "w")  # созранение файла
                 if name != "" and name != None:
@@ -463,10 +488,13 @@ def encrypt():
                 os.remove(str(file))  # удаление исходного файла
         ms_info("RSA", "Done!")
         mn.lineEdit.clear()
+        nm.lineEdit.clear()
+        name = ""
     except:
         ms_error("RSA", "Ошибка!")
 
 def decrypt():
+    global name
     try:
         file = mn.lineEdit.text()
         with open(file, "rb") as fil:
@@ -474,17 +502,20 @@ def decrypt():
             rsa_private_key = RSA.importKey(privateKey)
             rsa_private_key = PKCS1_OAEP.new(rsa_private_key)
             decrypted_text = rsa_private_key.decrypt(crypted)
-            decrypted_file_name = str(os.path.splitext(str(file))[0])
+            if name != '' and name != None:
+                decrypted_file_name = os.path.join(fileDir, str(name))
+            else:
+                decrypted_file_name = os.path.join(fileDir, str(os.path.splitext(str(file))[0]))
             with open(decrypted_file_name, "w") as decrypted_file:
                 decrypted_file.write(decrypted_text.decode("utf-8"))
-            if name != '' and name != None:
-                os.rename(str(os.path.splitext(str(file))[0]), str(name))  # переименование
             if st.checkBox_4.isChecked():
                 pass
             else:
                 os.remove(str(file))
         ms_info("RSA", "Done!")
         mn.lineEdit.clear()
+        nm.lineEdit.clear()
+        name = ""
     except:
         ms_error("RSA", "Ошибка!")
 
