@@ -405,7 +405,7 @@ def encrypt_blow(dirCrypt=False):
             ms_info(AppName, "Done!")
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, exp)
+            ms_error(AppName, str(exp))
 
 def decrypt_blow(dirCrypt=False):
     global name
@@ -438,7 +438,7 @@ def decrypt_blow(dirCrypt=False):
             ms_info(AppName, "Done!")
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, exp)
+            ms_error(AppName, str(exp))
 
 def encryptUi(dirCrypt=False):
     global name
@@ -466,7 +466,7 @@ def encryptUi(dirCrypt=False):
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, exp)
+            ms_error(AppName, str(exp))
 
 def decryptUi(dirCrypt=False):
     global name
@@ -488,7 +488,7 @@ def decryptUi(dirCrypt=False):
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, exp)
+            ms_error(AppName, str(exp))
 
 def encrypt(dirCrypt=False):
     global name
@@ -520,7 +520,7 @@ def encrypt(dirCrypt=False):
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, exp)
+            ms_error(AppName, str(exp))
 
 def decrypt(dirCrypt=False):
     global name
@@ -545,7 +545,7 @@ def decrypt(dirCrypt=False):
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, exp)
+            ms_error(AppName, str(exp))
 
 def decrypt_dir():
     global file, name
@@ -560,7 +560,7 @@ def decrypt_dir():
         name = ""
         ms_info(AppName, "Done!")
     except Exception as exp:
-        ms_error(AppName, exp)
+        ms_error(AppName, str(exp))
 
 def encrypt_dir():
     global file, name
@@ -575,7 +575,7 @@ def encrypt_dir():
         name = ""
         ms_info(AppName, "Done!")
     except Exception as exp:
-        ms_error(AppName, exp)
+        ms_error(AppName, str(exp))
 
 def decrypt_dirUi():
     global file, name
@@ -591,7 +591,7 @@ def decrypt_dirUi():
         name = ""
         ms_info(AppName, "Done!")
     except Exception as exp:
-        ms_error(AppName, exp)
+        ms_error(AppName, str(exp))
 
 def encrypt_dirUi():
     global file, name
@@ -607,7 +607,7 @@ def encrypt_dirUi():
         name = ""
         ms_info(AppName, "Done!")
     except Exception as exp:
-        ms_error(AppName, exp)
+        ms_error(AppName, str(exp))
 
 def decrypt_dir_blow():
     global file, name
@@ -622,7 +622,7 @@ def decrypt_dir_blow():
         name = ""
         ms_info(AppName, "Done!")
     except Exception as exp:
-        ms_error(AppName, exp)
+        ms_error(AppName, str(exp))
 
 def encrypt_dir_blow():
     global file, name
@@ -637,7 +637,7 @@ def encrypt_dir_blow():
         name = ""
         ms_info(AppName, "Done!")
     except Exception as exp:
-        ms_error(AppName, exp)
+        ms_error(AppName, str(exp))
 
 def btn_crypt(choice: bool):
     if choice: # AES | BlowFish
@@ -714,7 +714,7 @@ def takefile(choice: bool):
         elif not choice: # Cipher
             ui.lineEdit.setText(file)
     except Exception as exp:
-        ms_info(AppName, exp)
+        ms_info(AppName, str(exp))
 
 def takedir(choice: bool):
     global directory
@@ -725,7 +725,7 @@ def takedir(choice: bool):
         elif not choice: # Cipher
             ui.lineEdit.setText(directory)
     except Exception as exp:
-        ms_info(AppName, exp)
+        ms_info(AppName, str(exp))
 
 def saveName():
     global name
@@ -744,6 +744,7 @@ def openWind(openW: int):
         CCDialog.setWindowTitle("DarkCryptorBlowFish")
         CCDialog.show()
         Start.close()
+        choiceSettings = 2
     Start.close()
 
 def take_public():
