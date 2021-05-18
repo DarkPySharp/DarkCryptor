@@ -308,7 +308,6 @@ class Ui_Dialog(object):
 class ThreadClass(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent=parent)
-        self.isRunning = True
     def run(self):
         create_key()
 
@@ -697,6 +696,17 @@ def ms_error(title, text, information=None, detail=None):
         ms.setDetailedText(detail)
     ms.exec_()
 
+def ms_warning(title, text, information=None, detail=None):
+    ms = QtWidgets.QMessageBox()
+    ms.setIcon(QtWidgets.QMessageBox.Warning)
+    ms.setText(text)
+    ms.setWindowTitle(title)
+    if information != None:
+        ms.setInformativeText(information)
+    if detail != None:
+        ms.setDetailedText(detail)
+    ms.exec_()
+
 def qtOpen(choice=True):
     if choice:
         a = QtWidgets.QFileDialog.getOpenFileName()[0]
@@ -713,8 +723,8 @@ def takefile(choice: bool):
             mn.lineEdit.setText(file)
         elif not choice: # Cipher
             ui.lineEdit.setText(file)
-    except Exception as exp:
-        ms_info(AppName, str(exp))
+    except:
+        ms_warning(AppName, "Файл не выбран")
 
 def takedir(choice: bool):
     global directory
@@ -724,8 +734,8 @@ def takedir(choice: bool):
             mn.lineEdit.setText(directory)
         elif not choice: # Cipher
             ui.lineEdit.setText(directory)
-    except Exception as exp:
-        ms_info(AppName, str(exp))
+    except:
+        ms_warning(AppName, "Файл не выбран")
 
 def saveName():
     global name
@@ -755,8 +765,9 @@ def take_public():
             publicKey = publ.read()
         if not "PUBLIC" in publicKey.decode("utf-8"):
             ms_info(AppName, "Выбран не тот файл!")
+            publicKey = ""
     except:
-        ms_error(AppName, "Выбран не правильный файл")
+        ms_warning(AppName, "Файл не выбран")
 
 def take_private():
     global privateKey
@@ -766,8 +777,9 @@ def take_private():
             privateKey = priva.read()
         if not "PRIVATE" in privateKey.decode("utf-8"):
             ms_info(AppName, "Выбран не тот файл")
+            privateKey = ""
     except:
-        ms_error(AppName, "Выбран не правильный файл")
+        ms_warning(AppName, "Файл не выбран")
 
 def takebtn(choice: bool):
     if choice:
