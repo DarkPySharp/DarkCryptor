@@ -334,7 +334,7 @@ def getpassword():
             bytesText += oneBytes[0]
         ui.lineEdit_2.setText(bytesText)
     except:
-        ms_info("DarkCryptor", "Введите число байтов в пароле", information="байт = 1 символ")
+        ms_info(AppName, "Введите число байтов в пароле", information="байт = 1 символ")
 
 def settings_save(choice: bool):
     if choice: # AES | BlowFish
