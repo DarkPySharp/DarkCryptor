@@ -96,7 +96,7 @@ class Ui_Main(object):
 
     def runCreate(self):
         self.Threading = ThreadClass()
-        ms_info(AppName, "Производиться создание ключа, пожалуйста ожидайте", detail="Иногда проверяйте файл")
+        ms_box(AppName, "Производиться создание ключа, пожалуйста ожидайте", "info",detail="Иногда проверяйте файл")
         self.Threading.start()
 
 class Ui_Name(object):
@@ -333,7 +333,7 @@ def getpassword():
             bytesText += oneBytes[0]
         ui.lineEdit_2.setText(bytesText)
     except:
-        ms_info(AppName, "Введите число байтов в пароле", information="байт = 1 символ")
+        ms_box(AppName, "Введите число байтов в пароле", "info", information="байт = 1 символ")
 
 def settings_save(choice: bool):
     if choice: # AES | BlowFish
@@ -401,10 +401,10 @@ def encrypt_blow(dirCrypt=False):
                 name = ""
             if not st.checkBox_4.isChecked():
                 os.remove(str(file))
-            ms_info(AppName, "Done!")
+            ms_box(AppName, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, str(exp))
+            ms_box(AppName, str(exp), "err")
 
 def decrypt_blow(dirCrypt=False):
     global name
@@ -434,10 +434,10 @@ def decrypt_blow(dirCrypt=False):
             ui.lineEdit_2.clear()
             nm.lineEdit.clear()
             name = ""
-            ms_info(AppName, "Done!")
+            ms_box(AppName, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, str(exp))
+            ms_box(AppName, str(exp), "err")
 
 def encryptUi(dirCrypt=False):
     global name
@@ -458,14 +458,14 @@ def encryptUi(dirCrypt=False):
         if not st.checkBox_4.isChecked():
             os.remove(str(file))
         if not dirCrypt:
-            ms_info(AppName, "Done!")
+            ms_box(AppName, "Done!", "info")
             ui.lineEdit.clear()
             ui.lineEdit_2.clear()
             nm.lineEdit.clear()
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, str(exp))
+            ms_box(AppName, str(exp), "err")
 
 def decryptUi(dirCrypt=False):
     global name
@@ -480,14 +480,14 @@ def decryptUi(dirCrypt=False):
         if not st.checkBox_4.isChecked():
             os.remove(str(file))
         if not dirCrypt:
-            ms_info(AppName, "Done!")
+            ms_box(AppName, "Done!", "info")
             nm.lineEdit.clear()
             ui.lineEdit.clear()
             ui.lineEdit_2.clear()
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, str(exp))
+            ms_box(AppName, str(exp), "err")
 
 def encrypt(dirCrypt=False):
     global name
@@ -513,13 +513,13 @@ def encrypt(dirCrypt=False):
             if not st.checkBox_4.isChecked():
                 os.remove(str(file))
         if not dirCrypt:
-            ms_info(AppName, "Done!")
+            ms_box(AppName, "Done!", "info")
             mn.lineEdit.clear()
             nm.lineEdit.clear()
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, str(exp))
+            ms_box(AppName, str(exp), "err")
 
 def decrypt(dirCrypt=False):
     global name
@@ -538,13 +538,13 @@ def decrypt(dirCrypt=False):
             if not st.checkBox_4.isChecked():
                 os.remove(str(file))
         if not dirCrypt:
-            ms_info(AppName, "Done!")
+            ms_box(AppName, "Done!", "info")
             mn.lineEdit.clear()
             nm.lineEdit.clear()
             name = ""
     except Exception as exp:
         if not dirCrypt:
-            ms_error(AppName, str(exp))
+            ms_box(AppName, str(exp), "err")
 
 def decrypt_dir():
     global file, name
@@ -557,9 +557,9 @@ def decrypt_dir():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_info(AppName, "Done!")
+        ms_box(AppName, "Done!", "info")
     except Exception as exp:
-        ms_error(AppName, str(exp))
+        ms_box(AppName, str(exp), "err")
 
 def encrypt_dir():
     global file, name
@@ -572,9 +572,9 @@ def encrypt_dir():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_info(AppName, "Done!")
+        ms_box(AppName, "Done!", "info")
     except Exception as exp:
-        ms_error(AppName, str(exp))
+        ms_box(AppName, str(exp), "err")
 
 def decrypt_dirUi():
     global file, name
@@ -588,9 +588,9 @@ def decrypt_dirUi():
         ui.lineEdit.clear()
         ui.lineEdit_2.clear()
         name = ""
-        ms_info(AppName, "Done!")
+        ms_box(AppName, "Done!", "info")
     except Exception as exp:
-        ms_error(AppName, str(exp))
+        ms_box(AppName, str(exp), "err")
 
 def encrypt_dirUi():
     global file, name
@@ -604,9 +604,9 @@ def encrypt_dirUi():
         ui.lineEdit.clear()
         ui.lineEdit_2.clear()
         name = ""
-        ms_info(AppName, "Done!")
+        ms_box(AppName, "Done!", "info")
     except Exception as exp:
-        ms_error(AppName, str(exp))
+        ms_box(AppName, str(exp), "err")
 
 def decrypt_dir_blow():
     global file, name
@@ -619,9 +619,9 @@ def decrypt_dir_blow():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_info(AppName, "Done!")
+        ms_box(AppName, "Done!", "info")
     except Exception as exp:
-        ms_error(AppName, str(exp))
+        ms_box(AppName, str(exp), "err")
 
 def encrypt_dir_blow():
     global file, name
@@ -634,9 +634,9 @@ def encrypt_dir_blow():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_info(AppName, "Done!")
+        ms_box(AppName, "Done!", "info")
     except Exception as exp:
-        ms_error(AppName, str(exp))
+        ms_box(AppName, str(exp), "err")
 
 def btn_crypt(choice: bool):
     if choice: # AES | BlowFish
@@ -674,31 +674,14 @@ def btn_crypt(choice: bool):
             elif st.radioButton_2.isChecked():
                 decrypt()
 
-def ms_info(title, text, information=None, detail=None):
+def ms_box(title, text, icon, information=None, detail=None):
     ms = QtWidgets.QMessageBox()
-    ms.setIcon(QtWidgets.QMessageBox.Information)
-    ms.setText(text)
-    ms.setWindowTitle(title)
-    if information != None:
-        ms.setInformativeText(information)
-    if detail != None:
-        ms.setDetailedText(detail)
-    ms.exec_()
-
-def ms_error(title, text, information=None, detail=None):
-    ms = QtWidgets.QMessageBox()
-    ms.setIcon(QtWidgets.QMessageBox.Critical)
-    ms.setText(text)
-    ms.setWindowTitle(title)
-    if information != None:
-        ms.setInformativeText(information)
-    if detail != None:
-        ms.setDetailedText(detail)
-    ms.exec_()
-
-def ms_warning(title, text, information=None, detail=None):
-    ms = QtWidgets.QMessageBox()
-    ms.setIcon(QtWidgets.QMessageBox.Warning)
+    if icon == "err":
+        ms.setIcon(QtWidgets.QMessageBox.Critical)
+    elif icon == "info":
+        ms.setIcon(QtWidgets.QMessageBox.Information)
+    elif icon == "war":
+        ms.setIcon(QtWidgets.QMessageBox.Warning)
     ms.setText(text)
     ms.setWindowTitle(title)
     if information != None:
@@ -724,7 +707,7 @@ def takefile(choice: bool):
         elif not choice: # Cipher
             ui.lineEdit.setText(file)
     except:
-        ms_warning(AppName, "Файл не выбран")
+        ms_box(AppName, "Файл не выбран", "war")
 
 def takedir(choice: bool):
     global directory
@@ -735,7 +718,7 @@ def takedir(choice: bool):
         elif not choice: # Cipher
             ui.lineEdit.setText(directory)
     except:
-        ms_warning(AppName, "Файл не выбран")
+        ms_box(AppName, "Файл не выбран", "war")
 
 def saveName():
     global name
@@ -764,10 +747,10 @@ def take_public():
         with open(pub, "rb") as publ:
             publicKey = publ.read()
         if not "PUBLIC" in publicKey.decode("utf-8"):
-            ms_info(AppName, "Выбран не тот файл!")
+            ms_box(AppName, "Выбран не тот файл!", "war")
             publicKey = ""
     except:
-        ms_warning(AppName, "Файл не выбран")
+        ms_box(AppName, "Файл не выбран", "war")
 
 def take_private():
     global privateKey
@@ -776,10 +759,10 @@ def take_private():
         with open(priv, "rb") as priva:
             privateKey = priva.read()
         if not "PRIVATE" in privateKey.decode("utf-8"):
-            ms_info(AppName, "Выбран не тот файл")
+            ms_box(AppName, "Выбран не тот файл", "war")
             privateKey = ""
     except:
-        ms_warning(AppName, "Файл не выбран")
+        ms_box(AppName, "Файл не выбран", "war")
 
 def takebtn(choice: bool):
     if choice:
@@ -797,7 +780,7 @@ def rename():
     if st.checkBox_3.isChecked():
         NameDialog.show()
     else:
-        ms_info(AppName, "Чтобы работало изменения имени файла включите его в настройках")
+        ms_box(AppName, "Чтобы работало изменения имени файла включите его в настройках", "info")
 
 def choice_settings_save():
     if choiceSettings == 1:
@@ -806,7 +789,7 @@ def choice_settings_save():
         settings_save(True)
 
 def showInfo(button: str):
-    ms_info(button, "Откройте \"show details...\"", detail=infoEnc[button])
+    ms_box(button, "Откройте \"show details...\"", "info",detail=infoEnc[button])
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
@@ -826,7 +809,6 @@ if __name__ == '__main__':
     mn.setupUi(MainDialog)
     ui.setupUi(CCDialog)
     Start.show()
-
     mn.pushButton_7.clicked.connect(take_private)
     mn.pushButton_6.clicked.connect(take_public)
     mn.pushButton.clicked.connect(lambda: takebtn(True))
