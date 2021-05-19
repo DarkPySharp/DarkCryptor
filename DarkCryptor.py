@@ -420,7 +420,7 @@ def decrypt_blow(dirCrypt=False):
         cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
         msg = cipher.decrypt(ciphertext)
         last_byte = msg[-1]
-        msg = msg[:- (last_byte if type(last_byte) is int else ord(last_byte))]
+        msg = msg[:- (last_byte if type(last_byte) is int else ord(bytes(last_byte)))]
         if name != '' and name != None:
             fullPath = os.path.join(directory, str(name))
         else:
