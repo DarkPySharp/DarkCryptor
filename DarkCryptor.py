@@ -2,17 +2,22 @@
 """
 <-*- coding: utf-8 -*->
 Powered by -> {-*> DarkPyDeu <*-}
-# доделать функцию перезаписи файла при шифровки и расшифровки.
+#
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, Blowfish
+from pyAesCrypt import encryptFile, decryptFile, encryptStream
+from PIL import Image, ImageDraw
+from random import randint
 from Crypto import Random
 from struct import pack
 from random import shuffle
-import pyAesCrypt as Cry
+from io import BytesIO
+from re import findall
 import os
 
+keys = ""
 file = ""
 directory = ""
 name = None
@@ -24,7 +29,9 @@ AppName = "DarkCryptor"
 infoEnc = {
     "AES": "AES - Способен зашифровать любой файл ключом до 1024 бит ( но ключ надо запонить | записать куда-либо )",
     "BlowFish": "BlowFish - Способен зашифровать любой файл ключом от 4 бит до 50 бит ( но ключ надо запонить | записать куда-либо )",
-    "RSA": "RSA - Способен зашифровать любой файл ключом от 1024 бит ( ключ храниться в файлах public.key & private.key )"
+    "RSA": "RSA - Способен зашифровать любой файл ключом от 1024 бит ( ключ храниться в файлах public.key & private.key )",
+    "Steganography": """Steganography -  Записывает текст в изображение и записывает ключевые точки в текстовый файл,
+    который будет зашифрован AES алгоритмом"""
 }
 
 class Ui_Main(object):
@@ -122,63 +129,6 @@ class Ui_Name(object):
         Name.setWindowTitle(_translate("Name", "Редактор имени"))
         self.lineEdit.setPlaceholderText(_translate("Name", "Введите имя с расширением"))
         self.pushButton.setText(_translate("Name", "Сохранить"))
-
-class Ui_StartMenu(object):
-    def setupUi(self, StartMenu):
-        StartMenu.setObjectName("StartMenu")
-        StartMenu.resize(200, 135)
-        StartMenu.setMinimumSize(QtCore.QSize(200, 135))
-        StartMenu.setMaximumSize(QtCore.QSize(200, 135))
-        StartMenu.setStyleSheet("background-color: rgb(0, 0, 0);")
-        self.frame = QtWidgets.QFrame(StartMenu)
-        self.frame.setGeometry(QtCore.QRect(0, 0, 200, 135))
-        self.frame.setStyleSheet("background-color: black; border-radius: 15px")
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.BlowFish = QtWidgets.QPushButton(StartMenu)
-        self.BlowFish.setGeometry(QtCore.QRect(10, 50, 145, 35))
-        self.BlowFish.setStyleSheet("background-color: rgb(51, 51, 51);\n"
-"color: rgb(255, 62, 0);")
-        self.BlowFish.setObjectName("BlowFish")
-        self.AES = QtWidgets.QPushButton(StartMenu)
-        self.AES.setGeometry(QtCore.QRect(10, 10, 145, 35))
-        self.AES.setStyleSheet("background-color: rgb(51, 51, 51);\n"
-"color: rgb(255, 62, 0);")
-        self.AES.setObjectName("AES")
-        self.RSA = QtWidgets.QPushButton(StartMenu)
-        self.RSA.setGeometry(QtCore.QRect(10, 90, 145, 35))
-        self.RSA.setStyleSheet("background-color: rgb(51, 51, 51);\n"
-"color: rgb(255, 62, 0);")
-        self.RSA.setObjectName("RSA")
-        self.AESinfo = QtWidgets.QPushButton(StartMenu)
-        self.AESinfo.setGeometry(QtCore.QRect(155, 10, 35, 35))
-        self.AESinfo.setStyleSheet("background-color: rgb(51, 51, 51);\n"
-"color: rgb(255, 62, 0);")
-        self.AESinfo.setObjectName("AESinfo")
-        self.BlowFishInfo = QtWidgets.QPushButton(StartMenu)
-        self.BlowFishInfo.setGeometry(QtCore.QRect(155, 50, 35, 35))
-        self.BlowFishInfo.setStyleSheet("background-color: rgb(51, 51, 51);\n"
-"color: rgb(255, 62, 0);")
-        self.BlowFishInfo.setObjectName("BlowFishInfo")
-        self.RSAinfo = QtWidgets.QPushButton(StartMenu)
-        self.RSAinfo.setGeometry(QtCore.QRect(155, 90, 35, 35))
-        self.RSAinfo.setStyleSheet("background-color: rgb(51, 51, 51);\n"
-"color: rgb(255, 62, 0);")
-        self.RSAinfo.setObjectName("RSAinfo")
-        self.retranslateUi(StartMenu)
-        QtCore.QMetaObject.connectSlotsByName(StartMenu)
-
-    def retranslateUi(self, StartMenu):
-        _translate = QtCore.QCoreApplication.translate
-        StartMenu.setWindowTitle(_translate("StartMenu", "DarkCryptor Start"))
-        StartMenu.setWindowFlag(QtCore.Qt.FramelessWindowHint)
-        StartMenu.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.BlowFish.setText(_translate("StartMenu", "BlowFish"))
-        self.AES.setText(_translate("StartMenu", "AES"))
-        self.RSA.setText(_translate("StartMenu", "RSA"))
-        self.AESinfo.setText(_translate("StartMenu", "i"))
-        self.BlowFishInfo.setText(_translate("StartMenu", "i"))
-        self.RSAinfo.setText(_translate("StartMenu", "i"))
 
 class Ui_Settings(object):
     def setupUi(self, Settings):
@@ -304,6 +254,161 @@ class Ui_Dialog(object):
         self.lineEdit_3.setPlaceholderText(_translate("Dialog", "Кол-во битов"))
         self.pushButton_4.setText(_translate("Dialog", "Настройки"))
         self.pushButton_5.setText(_translate("Dialog", "Имя"))
+
+class Ui_StartMenu(object):
+    def setupUi(self, StartMenu):
+        StartMenu.setObjectName("StartMenu")
+        StartMenu.resize(200, 175)
+        StartMenu.setMinimumSize(QtCore.QSize(200, 175))
+        StartMenu.setMaximumSize(QtCore.QSize(200, 175))
+        StartMenu.setStyleSheet("background-color: rgb(0, 0, 0);")
+        self.frame = QtWidgets.QFrame(StartMenu)
+        self.frame.setGeometry(QtCore.QRect(0, 0, 200, 175))
+        self.frame.setStyleSheet("background-color: black; border-radius: 15px")
+        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.BlowFish = QtWidgets.QPushButton(StartMenu)
+        self.BlowFish.setGeometry(QtCore.QRect(10, 50, 145, 35))
+        self.BlowFish.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.BlowFish.setObjectName("BlowFish")
+        self.AES = QtWidgets.QPushButton(StartMenu)
+        self.AES.setGeometry(QtCore.QRect(10, 10, 145, 35))
+        self.AES.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.AES.setObjectName("AES")
+        self.RSA = QtWidgets.QPushButton(StartMenu)
+        self.RSA.setGeometry(QtCore.QRect(10, 90, 145, 35))
+        self.RSA.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.RSA.setObjectName("RSA")
+        self.AESinfo = QtWidgets.QPushButton(StartMenu)
+        self.AESinfo.setGeometry(QtCore.QRect(155, 10, 35, 35))
+        self.AESinfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.AESinfo.setObjectName("AESinfo")
+        self.BlowFishInfo = QtWidgets.QPushButton(StartMenu)
+        self.BlowFishInfo.setGeometry(QtCore.QRect(155, 50, 35, 35))
+        self.BlowFishInfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.BlowFishInfo.setObjectName("BlowFishInfo")
+        self.RSAinfo = QtWidgets.QPushButton(StartMenu)
+        self.RSAinfo.setGeometry(QtCore.QRect(155, 90, 35, 35))
+        self.RSAinfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.RSAinfo.setObjectName("RSAinfo")
+        self.Steganography = QtWidgets.QPushButton(StartMenu)
+        self.Steganography.setGeometry(QtCore.QRect(10, 130, 145, 35))
+        self.Steganography.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.Steganography.setObjectName("Steganography")
+        self.SteganoInfo = QtWidgets.QPushButton(StartMenu)
+        self.SteganoInfo.setGeometry(QtCore.QRect(155, 130, 35, 35))
+        self.SteganoInfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.SteganoInfo.setObjectName("SteganoInfo")
+        self.retranslateUi(StartMenu)
+        QtCore.QMetaObject.connectSlotsByName(StartMenu)
+
+    def retranslateUi(self, StartMenu):
+        _translate = QtCore.QCoreApplication.translate
+        StartMenu.setWindowTitle(_translate("StartMenu", "DarkCryptor Start"))
+        StartMenu.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+        StartMenu.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.BlowFish.setText(_translate("StartMenu", "BlowFish"))
+        self.AES.setText(_translate("StartMenu", "AES"))
+        self.RSA.setText(_translate("StartMenu", "RSA"))
+        self.AESinfo.setText(_translate("StartMenu", "i"))
+        self.BlowFishInfo.setText(_translate("StartMenu", "i"))
+        self.RSAinfo.setText(_translate("StartMenu", "i"))
+        self.Steganography.setText(_translate("StartMenu", "Steganography"))
+        self.SteganoInfo.setText(_translate("StartMenu", "i"))
+
+class Ui_Stegano(object):
+    def setupUi(self, Stegano):
+        Stegano.setObjectName("Stegano")
+        Stegano.resize(1101, 625)
+        Stegano.setMinimumSize(QtCore.QSize(1101, 625))
+        Stegano.setMaximumSize(QtCore.QSize(1101, 625))
+        Stegano.setStyleSheet("background-color: black;")
+        self.PlainTextDecrypted = QtWidgets.QPlainTextEdit(Stegano)
+        self.PlainTextDecrypted.setGeometry(QtCore.QRect(5, 5, 561, 616))
+        self.PlainTextDecrypted.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.PlainTextDecrypted.setObjectName("PlainTextDecrypted")
+        self.ImageLine = QtWidgets.QLineEdit(Stegano)
+        self.ImageLine.setGeometry(QtCore.QRect(570, 5, 440, 35))
+        self.ImageLine.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.ImageLine.setReadOnly(True)
+        self.ImageLine.setObjectName("ImageLine")
+        self.TakeImage = QtWidgets.QPushButton(Stegano)
+        self.TakeImage.setGeometry(QtCore.QRect(1012, 5, 88, 35))
+        self.TakeImage.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.TakeImage.setObjectName("TakeImage")
+        self.PasswordLine = QtWidgets.QLineEdit(Stegano)
+        self.PasswordLine.setGeometry(QtCore.QRect(570, 42, 529, 35))
+        self.PasswordLine.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.PasswordLine.setObjectName("PasswordLine")
+        self.PlainTextToEncrypt = QtWidgets.QPlainTextEdit(Stegano)
+        self.PlainTextToEncrypt.setEnabled(True)
+        self.PlainTextToEncrypt.setGeometry(QtCore.QRect(570, 80, 526, 501))
+        self.PlainTextToEncrypt.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.PlainTextToEncrypt.setObjectName("PlainTextToEncrypt")
+        self.S = QtWidgets.QPushButton(Stegano)
+        self.S.setGeometry(QtCore.QRect(570, 585, 100, 35))
+        self.S.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.S.setObjectName("S")
+        self.pushButton_3 = QtWidgets.QPushButton(Stegano)
+        self.pushButton_3.setGeometry(QtCore.QRect(988, 585, 110, 35))
+        self.pushButton_3.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.pushButton_3.setObjectName("pushButton_3")
+        self.ImageLine_2 = QtWidgets.QLineEdit(Stegano)
+        self.ImageLine_2.setGeometry(QtCore.QRect(570, 80, 440, 35))
+        self.ImageLine_2.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.ImageLine_2.setReadOnly(True)
+        self.ImageLine_2.hide()
+        self.ImageLine_2.setObjectName("ImageLine_2")
+        self.TakeImage_2 = QtWidgets.QPushButton(Stegano)
+        self.TakeImage_2.setGeometry(QtCore.QRect(1012, 80, 88, 35))
+        self.TakeImage_2.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.TakeImage_2.hide()
+        self.TakeImage_2.setObjectName("TakeImage_2")
+        self.retranslateUi(Stegano)
+        QtCore.QMetaObject.connectSlotsByName(Stegano)
+
+    def retranslateUi(self, Stegano):
+        _translate = QtCore.QCoreApplication.translate
+        Stegano.setWindowTitle(_translate("Stegano", "Stegano"))
+        self.ImageLine.setPlaceholderText(_translate("Stegano", "Изображение"))
+        self.TakeImage.setText(_translate("Stegano", "Open"))
+        self.PasswordLine.setPlaceholderText(_translate("Stegano", "Пароль"))
+        self.PlainTextToEncrypt.setPlaceholderText(_translate("Stegano", "Текст для шифрования"))
+        self.PlainTextDecrypted.setPlaceholderText(_translate("Stegano", "Расшифрованый текст"))
+        self.S.setText(_translate("Stegano", "Настройки"))
+        self.pushButton_3.setText(_translate("Stegano", "Шифровать"))
+        self.ImageLine_2.setPlaceholderText(_translate("Stegano", "Файловый пароль"))
+        self.TakeImage_2.setText(_translate("Stegano", "Open"))
+
+class Ui_StegSett(object):
+    def setupUi(self, StegSett):
+        StegSett.setObjectName("StegSett")
+        StegSett.resize(170, 95)
+        StegSett.setMinimumSize(QtCore.QSize(170, 95))
+        StegSett.setMaximumSize(QtCore.QSize(170, 95))
+        StegSett.setStyleSheet("background-color: black;")
+        self.EncryptButn = QtWidgets.QRadioButton(StegSett)
+        self.EncryptButn.setGeometry(QtCore.QRect(0, 5, 171, 24))
+        self.EncryptButn.setStyleSheet("color: rgb(255, 62, 0);")
+        self.EncryptButn.setObjectName("EncryptButn")
+        self.DecryptButn = QtWidgets.QRadioButton(StegSett)
+        self.DecryptButn.setGeometry(QtCore.QRect(0, 30, 171, 24))
+        self.DecryptButn.setStyleSheet("color: rgb(255, 62, 0);")
+        self.DecryptButn.setObjectName("DecryptButn")
+        self.pushButton = QtWidgets.QPushButton(StegSett)
+        self.pushButton.setGeometry(QtCore.QRect(5, 60, 161, 31))
+        self.pushButton.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.pushButton.setObjectName("pushButton")
+        self.retranslateUi(StegSett)
+        QtCore.QMetaObject.connectSlotsByName(StegSett)
+
+    def retranslateUi(self, StegSett):
+        _translate = QtCore.QCoreApplication.translate
+        StegSett.setWindowTitle(_translate("StegSett", "Settings"))
+        self.EncryptButn.setText(_translate("StegSett", "Шифровать"))
+        self.EncryptButn.setChecked(True)
+        self.DecryptButn.setText(_translate("StegSett", "Расшифровать"))
+        self.pushButton.setText(_translate("StegSett", "Сохранить"))
 
 class ThreadClass(QtCore.QThread):
     def __init__(self, parent=None):
@@ -439,6 +544,64 @@ def decrypt_blow(dirCrypt=False):
         if not dirCrypt:
             ms_box(AppName, str(exp), "err")
 
+def encrypt_image():
+    global keys
+    try:
+        imageName = steg.ImageLine.text()
+        img = Image.open(imageName)
+        password = steg.PasswordLine.text()
+        draw = ImageDraw.Draw(img)
+        width = img.size[0]
+        height = img.size[1]
+        pix = img.load()
+        fullPath = os.path.join(directory, "keys.txt")
+        f = open(fullPath, 'wb')
+        text = steg.PlainTextToEncrypt.toPlainText()
+
+        for elem in ([ord(elem) for elem in text]):
+            key = (randint(1, width - 10), randint(1, height - 10))
+            g, b = pix[key][1:3]
+            draw.point(key, (elem, g, b))
+            keys += str(key) + '\n'
+
+        keys = BytesIO(bytes(keys.encode("utf-8")))
+
+        encryptStream(keys, f, password, bufferSize)
+        img.save(f"{imageName}.png", "PNG")
+        f.close()
+        steg.ImageLine.clear()
+        steg.PlainTextToEncrypt.clear()
+        steg.PasswordLine.clear()
+        ms_box("DarkCryptor", "Done", "info", detail=f"Картинка сохранена в директории \"{imageName}.png\".\nКлючи сохранены в файл \"{fullPath}\"")
+    except Exception as exp:
+        ms_box("DarkCryptor", str(exp), "err")
+
+def decrypt_image():
+    try:
+        a = []
+        keys = []
+        imageName = steg.ImageLine.text()
+        img = Image.open(imageName)
+        password = steg.PasswordLine.text()
+        pix = img.load()
+        file = steg.ImageLine_2.text()
+        decFile = "11ppp1pp1p1pp.txt"
+        decryptFile(file, decFile, password, bufferSize)
+        with open(decFile, "r") as fOut:
+            y = str([line.strip() for line in fOut])
+            os.remove(decFile)
+        for i in range(len(findall(r'\((\d+)\,', y))):
+            keys.append((int(findall(r'\((\d+)\,', y)[i]), int(findall(r'\,\s(\d+)\)', y)[i])))
+        for key in keys:
+            a.append(pix[tuple(key)][0])
+        complitedText = ''.join([chr(elem) for elem in a])
+        steg.PlainTextDecrypted.setPlainText(complitedText)
+        steg.PasswordLine.clear()
+        steg.ImageLine.clear()
+        steg.ImageLine_2.clear()
+    except Exception as exp:
+        ms_box("DarkCryptor", str(exp), "err")
+
 def encryptUi(dirCrypt=False):
     global name
     try:
@@ -447,7 +610,7 @@ def encryptUi(dirCrypt=False):
             fullPath = os.path.join(directory, name)
         else:
             fullPath = os.path.join(directory, str(file) + ".DC")
-        Cry.encryptFile(str(file), fullPath, password, bufferSize)
+        encryptFile(str(file), fullPath, password, bufferSize)
         if st.checkBox_2.isChecked():
             savepass = open("CCSavePass.txt", "w")
             if name != "" and name != None:
@@ -458,11 +621,11 @@ def encryptUi(dirCrypt=False):
         if not st.checkBox_4.isChecked():
             os.remove(str(file))
         if not dirCrypt:
-            ms_box(AppName, "Done!", "info")
             ui.lineEdit.clear()
             ui.lineEdit_2.clear()
             nm.lineEdit.clear()
             name = ""
+            ms_box(AppName, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
             ms_box(AppName, str(exp), "err")
@@ -473,18 +636,17 @@ def decryptUi(dirCrypt=False):
         passworded = ui.lineEdit_2.text()
         if name != '' and name != None:
             fullPath = os.path.join(directory, str(name))
-            Cry.decryptFile(str(file), fullPath, passworded, bufferSize)
         else:
             fullPath = os.path.join(directory, str(os.path.splitext(str(file))[0]))
-            Cry.decryptFile(str(file), fullPath, passworded, bufferSize)
+        decryptFile(str(file), fullPath, passworded, bufferSize)
         if not st.checkBox_4.isChecked():
             os.remove(str(file))
         if not dirCrypt:
-            ms_box(AppName, "Done!", "info")
             nm.lineEdit.clear()
             ui.lineEdit.clear()
             ui.lineEdit_2.clear()
             name = ""
+            ms_box(AppName, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
             ms_box(AppName, str(exp), "err")
@@ -513,10 +675,10 @@ def encrypt(dirCrypt=False):
             if not st.checkBox_4.isChecked():
                 os.remove(str(file))
         if not dirCrypt:
-            ms_box(AppName, "Done!", "info")
             mn.lineEdit.clear()
             nm.lineEdit.clear()
             name = ""
+            ms_box(AppName, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
             ms_box(AppName, str(exp), "err")
@@ -538,10 +700,10 @@ def decrypt(dirCrypt=False):
             if not st.checkBox_4.isChecked():
                 os.remove(str(file))
         if not dirCrypt:
-            ms_box(AppName, "Done!", "info")
             mn.lineEdit.clear()
             nm.lineEdit.clear()
             name = ""
+            ms_box(AppName, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
             ms_box(AppName, str(exp), "err")
@@ -697,15 +859,19 @@ def qtOpen(choice=True):
         a = QtWidgets.QFileDialog.getExistingDirectory()
     return a
 
-def takefile(choice: bool):
+def takefile(choice=0):
     global file, directory
     try:
         file = qtOpen()
         directory = os.path.dirname(file)
-        if choice: # RSA
+        if choice == 0: # RSA
             mn.lineEdit.setText(file)
-        elif not choice: # Cipher
+        elif choice == 1: # Cipher
             ui.lineEdit.setText(file)
+        elif choice == 2: # stegano Image line
+            steg.ImageLine.setText(file)
+        elif choice == 3:
+            steg.ImageLine_2.setText(file)
     except:
         ms_box(AppName, "Файл не выбран", "war")
 
@@ -738,6 +904,9 @@ def openWind(openW: int):
         CCDialog.show()
         Start.close()
         choiceSettings = 2
+    elif openW == 3:
+        SteganoDialog.show()
+        Start.close()
     Start.close()
 
 def take_public():
@@ -764,17 +933,17 @@ def take_private():
     except:
         ms_box(AppName, "Файл не выбран", "war")
 
-def takebtn(choice: bool):
+def takebtn(choice: int):
     if choice:
         if st.checkBox.isChecked():
             takedir(True)
         else:
-            takefile(True)
+            takefile(0)
     elif not choice:
         if st.checkBox.isChecked():
             takedir(False)
         else:
-            takefile(False)
+            takefile(1)
 
 def rename():
     if st.checkBox_3.isChecked():
@@ -791,6 +960,26 @@ def choice_settings_save():
 def showInfo(button: str):
     ms_box(button, "Откройте \"show details...\"", "info",detail=infoEnc[button])
 
+def settings_Save_Steg():
+    if stegS.EncryptButn.isChecked():
+        steg.PlainTextToEncrypt.show()
+        steg.ImageLine_2.hide()
+        steg.TakeImage_2.hide()
+        steg.PlainTextDecrypted.clear()
+        steg.pushButton_3.setText("Шифровать")
+    elif stegS.DecryptButn.isChecked():
+        steg.PlainTextToEncrypt.hide()
+        steg.TakeImage_2.show()
+        steg.ImageLine_2.show()
+        steg.pushButton_3.setText("Расшифровать")
+    StegSettDial.close()
+
+def CryptButton_steg(button: str):
+    if button.lower() == "шифровать":
+        encrypt_image()
+    elif button.lower() == "расшифровать":
+        decrypt_image()
+
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     CCDialog = QtWidgets.QDialog()
@@ -798,16 +987,22 @@ if __name__ == '__main__':
     NameDialog = QtWidgets.QDialog()
     SettingsDialog = QtWidgets.QDialog()
     Start = QtWidgets.QDialog()
+    SteganoDialog = QtWidgets.QDialog()
+    StegSettDial = QtWidgets.QDialog()
     ui = Ui_Dialog()
     st = Ui_Settings()
     mn = Ui_Main()
     nm = Ui_Name()
     start = Ui_StartMenu()
+    steg = Ui_Stegano()
+    stegS = Ui_StegSett()
     start.setupUi(Start)
     st.setupUi(SettingsDialog)
     nm.setupUi(NameDialog)
     mn.setupUi(MainDialog)
     ui.setupUi(CCDialog)
+    steg.setupUi(SteganoDialog)
+    stegS.setupUi(StegSettDial)
     Start.show()
     mn.pushButton_7.clicked.connect(take_private)
     mn.pushButton_6.clicked.connect(take_public)
@@ -823,11 +1018,18 @@ if __name__ == '__main__':
     start.AESinfo.clicked.connect(lambda: showInfo("AES"))
     start.BlowFishInfo.clicked.connect(lambda: showInfo("BlowFish"))
     start.RSAinfo.clicked.connect(lambda: showInfo("RSA"))
+    start.SteganoInfo.clicked.connect(lambda: showInfo("Steganography"))
+    start.Steganography.clicked.connect(lambda: openWind(3))
     st.pushButton.clicked.connect(choice_settings_save)
     ui.pushButton.clicked.connect(lambda: takebtn(False))
     ui.pushButton_3.clicked.connect(getpassword)
     ui.pushButton_5.clicked.connect(lambda: NameDialog.show())
     ui.pushButton_2.clicked.connect(lambda: btn_crypt(True))
     ui.pushButton_4.clicked.connect(lambda: SettingsDialog.show())
+    steg.TakeImage.clicked.connect(lambda: takefile(2))
+    steg.TakeImage_2.clicked.connect(lambda: takefile(3))
+    steg.pushButton_3.clicked.connect(lambda: CryptButton_steg(steg.pushButton_3.text()))
+    steg.S.clicked.connect(lambda: StegSettDial.show())
+    stegS.pushButton.clicked.connect(settings_Save_Steg)
 
     app.exec_()
