@@ -5,6 +5,7 @@ Powered by -> {-*> DarkPyDeu <*-}
 #
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
+from cryptography.fernet import Fernet
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, Blowfish
 from pyAesCrypt import encryptFile, decryptFile, encryptStream
@@ -341,7 +342,6 @@ class Ui_Stegano(object):
         self.PasswordLine.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.PasswordLine.setObjectName("PasswordLine")
         self.PlainTextToEncrypt = QtWidgets.QPlainTextEdit(Stegano)
-        self.PlainTextToEncrypt.setEnabled(True)
         self.PlainTextToEncrypt.setGeometry(QtCore.QRect(570, 80, 526, 501))
         self.PlainTextToEncrypt.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.PlainTextToEncrypt.setObjectName("PlainTextToEncrypt")
@@ -350,20 +350,31 @@ class Ui_Stegano(object):
         self.S.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.S.setObjectName("S")
         self.pushButton_3 = QtWidgets.QPushButton(Stegano)
-        self.pushButton_3.setGeometry(QtCore.QRect(988, 585, 110, 35))
+        self.pushButton_3.setGeometry(QtCore.QRect(987, 585, 111, 35))
         self.pushButton_3.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.pushButton_3.setObjectName("pushButton_3")
         self.ImageLine_2 = QtWidgets.QLineEdit(Stegano)
         self.ImageLine_2.setGeometry(QtCore.QRect(570, 80, 440, 35))
         self.ImageLine_2.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.ImageLine_2.setReadOnly(True)
-        self.ImageLine_2.hide()
         self.ImageLine_2.setObjectName("ImageLine_2")
+        self.ImageLine_2.hide()
         self.TakeImage_2 = QtWidgets.QPushButton(Stegano)
         self.TakeImage_2.setGeometry(QtCore.QRect(1012, 80, 88, 35))
         self.TakeImage_2.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
-        self.TakeImage_2.hide()
         self.TakeImage_2.setObjectName("TakeImage_2")
+        self.TakeImage_2.hide()
+        self.PasswordLineNE = QtWidgets.QLineEdit(Stegano)
+        self.PasswordLineNE.setGeometry(QtCore.QRect(570, 120, 440, 35))
+        self.PasswordLineNE.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.PasswordLineNE.setReadOnly(True)
+        self.PasswordLineNE.setObjectName("PasswordLineNE")
+        self.PasswordLineNE.hide()
+        self.TakePasswordNE = QtWidgets.QPushButton(Stegano)
+        self.TakePasswordNE.setGeometry(QtCore.QRect(1012, 120, 88, 35))
+        self.TakePasswordNE.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.TakePasswordNE.setObjectName("TakePasswordNE")
+        self.TakePasswordNE.hide()
         self.retranslateUi(Stegano)
         QtCore.QMetaObject.connectSlotsByName(Stegano)
 
@@ -375,10 +386,13 @@ class Ui_Stegano(object):
         self.PasswordLine.setPlaceholderText(_translate("Stegano", "Пароль"))
         self.PlainTextToEncrypt.setPlaceholderText(_translate("Stegano", "Текст для шифрования"))
         self.PlainTextDecrypted.setPlaceholderText(_translate("Stegano", "Расшифрованый текст"))
+        self.PlainTextDecrypted.setReadOnly(True)
         self.S.setText(_translate("Stegano", "Настройки"))
         self.pushButton_3.setText(_translate("Stegano", "Шифровать"))
         self.ImageLine_2.setPlaceholderText(_translate("Stegano", "Файловый пароль"))
         self.TakeImage_2.setText(_translate("Stegano", "Open"))
+        self.PasswordLineNE.setPlaceholderText(_translate("Stegano", "Файловый пароль ( читабельный )"))
+        self.TakePasswordNE.setText(_translate("Stegano", "Open"))
 
 class Ui_StegSett(object):
     def setupUi(self, StegSett):
@@ -547,6 +561,7 @@ def decrypt_blow(dirCrypt=False):
 def encrypt_image():
     global keys
     try:
+        Key = Fernet.generate_key()
         imageName = steg.ImageLine.text()
         img = Image.open(imageName)
         password = steg.PasswordLine.text()
@@ -555,10 +570,13 @@ def encrypt_image():
         height = img.size[1]
         pix = img.load()
         fullPath = os.path.join(directory, "keys.txt")
+        passwordFile = open(os.path.join(directory, "passwordImage.txt"), "wb")
         f = open(fullPath, 'wb')
-        text = steg.PlainTextToEncrypt.toPlainText()
+        fIn = steg.PlainTextToEncrypt.toPlainText()
+        cipher = Fernet(Key)
+        fOut = cipher.encrypt(bytes(fIn.encode()))
 
-        for elem in ([ord(elem) for elem in text]):
+        for elem in ([ord(elem) for elem in fOut.decode()]):
             key = (randint(1, width - 10), randint(1, height - 10))
             g, b = pix[key][1:3]
             draw.point(key, (elem, g, b))
@@ -567,6 +585,8 @@ def encrypt_image():
         keys = BytesIO(bytes(keys.encode("utf-8")))
 
         encryptStream(keys, f, password, bufferSize)
+        passwordFile.write(Key)
+        passwordFile.close()
         img.save(f"{imageName}.png", "PNG")
         f.close()
         steg.ImageLine.clear()
@@ -583,10 +603,14 @@ def decrypt_image():
         imageName = steg.ImageLine.text()
         img = Image.open(imageName)
         password = steg.PasswordLine.text()
+        passwordFile = steg.PasswordLineNE.text()
         pix = img.load()
         file = steg.ImageLine_2.text()
         decFile = "11ppp1pp1p1pp.txt"
         decryptFile(file, decFile, password, bufferSize)
+        with open(passwordFile, "rb") as fPass:
+            Key = fPass.read()
+            cipher = Fernet(Key)
         with open(decFile, "r") as fOut:
             y = str([line.strip() for line in fOut])
             os.remove(decFile)
@@ -595,10 +619,12 @@ def decrypt_image():
         for key in keys:
             a.append(pix[tuple(key)][0])
         complitedText = ''.join([chr(elem) for elem in a])
-        steg.PlainTextDecrypted.setPlainText(complitedText)
+        outText = cipher.decrypt(bytes(complitedText.encode()))
+        steg.PlainTextDecrypted.setPlainText(outText.decode())
         steg.PasswordLine.clear()
         steg.ImageLine.clear()
         steg.ImageLine_2.clear()
+        steg.PasswordLineNE.clear()
     except Exception as exp:
         ms_box("DarkCryptor", str(exp), "err")
 
@@ -872,6 +898,8 @@ def takefile(choice=0):
             steg.ImageLine.setText(file)
         elif choice == 3:
             steg.ImageLine_2.setText(file)
+        elif choice == 4: # файловый пароль не читабельный
+            steg.PasswordLineNE.setText(file)
     except:
         ms_box(AppName, "Файл не выбран", "war")
 
@@ -966,11 +994,15 @@ def settings_Save_Steg():
         steg.ImageLine_2.hide()
         steg.TakeImage_2.hide()
         steg.PlainTextDecrypted.clear()
+        steg.PasswordLineNE.hide()
+        steg.TakePasswordNE.hide()
         steg.pushButton_3.setText("Шифровать")
     elif stegS.DecryptButn.isChecked():
         steg.PlainTextToEncrypt.hide()
         steg.TakeImage_2.show()
         steg.ImageLine_2.show()
+        steg.PasswordLineNE.show()
+        steg.TakePasswordNE.show()
         steg.pushButton_3.setText("Расшифровать")
     StegSettDial.close()
 
@@ -1030,6 +1062,7 @@ if __name__ == '__main__':
     steg.TakeImage_2.clicked.connect(lambda: takefile(3))
     steg.pushButton_3.clicked.connect(lambda: CryptButton_steg(steg.pushButton_3.text()))
     steg.S.clicked.connect(lambda: StegSettDial.show())
+    steg.TakePasswordNE.clicked.connect(lambda: takefile(4))
     stegS.pushButton.clicked.connect(settings_Save_Steg)
 
     app.exec_()
