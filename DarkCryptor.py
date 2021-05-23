@@ -2,7 +2,7 @@
 """
 <-*- coding: utf-8 -*->
 Powered by -> {-*> DarkPyDeu <*-}
-#
+# DarkCryptor 1.0.0
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 from cryptography.fernet import Fernet
