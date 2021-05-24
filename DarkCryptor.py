@@ -8,7 +8,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from cryptography.fernet import Fernet
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, Blowfish
-from pyAesCrypt import encryptFile, decryptFile, encryptStream
+from Modules.CustomAES import encryptFile, decryptFile, encryptStream
 from PIL import Image, ImageDraw
 from random import randint
 from Crypto import Random
