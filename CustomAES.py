@@ -60,7 +60,7 @@ def encryptStream(fIn, fOut, passw, bufferSize):
     hmac1 = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
     hmac1.update(c_iv_key)
 
-    fOut.write(bytes("DC", "utf8"))
+    fOut.write(bytes("DCA", "utf8"))
     fOut.write(b"\x02")
     fOut.write(b"\x00")
 
@@ -133,7 +133,7 @@ def decryptStream(fIn, fOut, passw, bufferSize, inputLength):
         raise ValueError("Password is too long.")
 
     fdata = fIn.read(3)
-    if (fdata != bytes("AES", "utf8") or inputLength < 136):
+    if (fdata != bytes("DCA", "utf8") or inputLength < 136):
             raise ValueError("File is corrupted or not an AES Crypt "
                              "(or pyAesCrypt) file.")
 
