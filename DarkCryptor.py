@@ -9,10 +9,10 @@ from cryptography.fernet import Fernet
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, Blowfish
 from Crypto.Util import Padding
+from Crypto import Random
 from Modules.CustomAES import encryptFile, decryptFile, encryptStream
 from PIL import Image, ImageDraw
 from random import randint
-from Crypto import Random
 from random import shuffle
 from io import BytesIO
 from re import findall
