@@ -2,17 +2,17 @@
 """
 <-*- coding: utf-8 -*->
 Powered by -> {-*> DarkPyDeu <*-}
-# 1
+# DarkCryptor 1.0.1
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 from cryptography.fernet import Fernet
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, Blowfish
+from Crypto.Util import Padding
 from Modules.CustomAES import encryptFile, decryptFile, encryptStream
 from PIL import Image, ImageDraw
 from random import randint
 from Crypto import Random
-from struct import pack
 from random import shuffle
 from io import BytesIO
 from re import findall
@@ -21,9 +21,9 @@ import os
 keys = ""
 file = ""
 directory = ""
-name = None
 privateKey = ""
 publicKey = ""
+name = None
 choiceSettings = None
 bufferSize = 512 * 1024
 AppName = "DarkCryptor"
@@ -492,7 +492,7 @@ def encrypt_blow(dirCrypt=False):
         if not len(password) <= 3:
             key = bytes(password.encode())
             iv = Random.new().read(bs)
-            cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
+            cipher = Blowfish.new(key, Blowfish.MODE_EAX, iv)
             with open(file, "r") as f:
                 readFileText = f.read()
             if st.checkBox_2.isChecked():
@@ -502,11 +502,8 @@ def encrypt_blow(dirCrypt=False):
                 else:
                     savepass.write(f"\n {file}.DC ::: {password}")
                 savepass.close()
-            plaintext = bytes(readFileText.encode())
-            plen = bs - divmod(len(plaintext), bs)[1]
-            padding = [plen] * plen
-            padding = pack('b' * plen, *padding)
-            msg = iv + cipher.encrypt(plaintext + padding)
+            plaintext = Padding.pad(bytes(readFileText.encode()), 1000, "iso7816")
+            msg = iv + cipher.encrypt(plaintext)
             if name != '' and name != None:
                 fullPath = os.path.join(directory, name)
             else:
@@ -536,10 +533,8 @@ def decrypt_blow(dirCrypt=False):
         key = bytes(password.encode())
         iv = ciphertext[:bs]
         ciphertext = ciphertext[bs:]
-        cipher = Blowfish.new(key, Blowfish.MODE_CBC, iv)
-        msg = cipher.decrypt(ciphertext)
-        last_byte = msg[-1]
-        msg = msg[:- (last_byte if type(last_byte) is int else ord(bytes(last_byte)))]
+        cipher = Blowfish.new(key, Blowfish.MODE_EAX, iv)
+        msg = Padding.unpad(cipher.decrypt(ciphertext), 1000, "iso7816")
         if name != '' and name != None:
             fullPath = os.path.join(directory, str(name))
         else:
