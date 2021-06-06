@@ -2,7 +2,8 @@
 """
 <-*- coding: utf-8 -*->
 Powered by -> {-*> DarkPyDeu <*-}
-# DarkCryptor 1.0.2
+# DarkCryptor 1.0.3
+# Fixed bugs
 """
 from PyQt5 import QtCore, QtGui, QtWidgets
 from cryptography.fernet import Fernet
@@ -13,9 +14,10 @@ from Crypto import Random
 from Modules.CustomAES import encryptFile, decryptFile, encryptStream
 from PIL import Image, ImageDraw
 from random import randint
-from random import shuffle
+from random import choice
 from io import BytesIO
 from re import findall
+from string import ascii_letters, digits, hexdigits, punctuation
 import os
 
 keys = ""
@@ -26,11 +28,12 @@ publicKey = ""
 name = None
 choiceSettings = None
 bufferSize = 512 * 1024
-AppName = "DarkCryptor"
+APP_NAME = "DarkCryptor"
 infoEnc = {
-    "AES": "AES - Способен зашифровать любой файл ключом до 1024 бит ( но ключ надо запонить | записать куда-либо )",
-    "BlowFish": "BlowFish - Способен зашифровать любой файл ключом от 4 бит до 50 бит ( но ключ надо запонить | записать куда-либо )",
-    "RSA": "RSA - Способен зашифровать любой файл ключом от 1024 бит ( ключ храниться в файлах public.key & private.key )",
+    "AES": "AES - Способен зашифровать любой файл ключом до 1024 бит ( но ключ надо запонить | записать куда-либо ) ключ генерируется, который делится на 4",
+    "BlowFish": "BlowFish - Способен зашифровать любой файл ключом от 4 бит до 50 бит ( но ключ надо запонить | записать куда-либо ) ключ генерируется, который делится на 4",
+    "RSA": """RSA - Способен зашифровать любой файл ключом от 1024 бит { длина ключа зависит от размера шифруемого файла }
+    ( ключ храниться в файлах public.key & private.key )""",
     "Steganography": """Steganography -  Записывает зашифрованый текст ( ключ будет в отдельном файле ) в изображение и 
     записывает ключевые точки в текстовый файл, который будет зашифрован AES алгоритмом."""
 }
@@ -40,49 +43,41 @@ class Ui_Main(object):
         Main.resize(647, 130)
         Main.setMinimumSize(QtCore.QSize(647, 130))
         Main.setMaximumSize(QtCore.QSize(647, 130))
-        Main.setStyleSheet("background-color: rgb(0, 0, 0);")
+        Main.setStyleSheet("QDialog{background-color: rgb(0, 0, 0);}"
+                           "QPushButton{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: 2px;border-radius: 3px;}"
+                           "QLineEdit{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: rgb(255, 85, 0); border-radius: 3px;selection-color: rgb(0, 0, 0); selection-background-color: rgb(255, 85, 0);}"
+                           "QGroupBox{background-color: rgb(0, 0, 0);}")
         self.lineEdit = QtWidgets.QLineEdit(Main)
         self.lineEdit.setGeometry(QtCore.QRect(8, 9, 540, 35))
-        self.lineEdit.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.lineEdit.setReadOnly(True)
         self.pushButton = QtWidgets.QPushButton(Main)
         self.pushButton.setGeometry(QtCore.QRect(550, 9, 88, 35))
-        self.pushButton.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_2 = QtWidgets.QPushButton(Main)
         self.pushButton_2.setGeometry(QtCore.QRect(507, 91, 132, 35))
-        self.pushButton_2.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.groupBox = QtWidgets.QGroupBox(Main)
         self.groupBox.setGeometry(QtCore.QRect(8, 50, 631, 41))
-        self.groupBox.setStyleSheet("background-color: rgb(0, 0, 0);")
         self.groupBox.setTitle("")
         self.pushButton_3 = QtWidgets.QPushButton(self.groupBox)
         self.pushButton_3.setGeometry(QtCore.QRect(520, 1, 110, 34))
-        self.pushButton_3.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.lineEdit_3 = QtWidgets.QLineEdit(self.groupBox)
         self.lineEdit_3.setGeometry(QtCore.QRect(417, 1, 101, 34))
-        self.lineEdit_3.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_6 = QtWidgets.QPushButton(self.groupBox)
         self.pushButton_6.setGeometry(QtCore.QRect(0, 0, 110, 34))
-        self.pushButton_6.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_7 = QtWidgets.QPushButton(self.groupBox)
         self.pushButton_7.setGeometry(QtCore.QRect(111, 0, 110, 34))
-        self.pushButton_7.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_4 = QtWidgets.QPushButton(Main)
         self.pushButton_4.setGeometry(QtCore.QRect(417, 91, 88, 35))
-        self.pushButton_4.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_5 = QtWidgets.QPushButton(Main)
         self.pushButton_5.setGeometry(QtCore.QRect(327, 91, 88, 35))
-        self.pushButton_5.setStyleSheet("color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);")
         self.pushButton_5.setEnabled(False)
         self.pushButton_8 = QtWidgets.QPushButton(Main)
         self.pushButton_8.setGeometry(QtCore.QRect(9, 91, 50, 35))
-        self.pushButton_8.setStyleSheet("color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);")
         self.retranslateUi(Main)
         QtCore.QMetaObject.connectSlotsByName(Main)
 
     def retranslateUi(self, Main):
         _translate = QtCore.QCoreApplication.translate
-        Main.setWindowTitle(_translate("Main", "DarkCryptorRSA"))
+        Main.setWindowTitle(_translate("Main", f"{APP_NAME}RSA"))
         self.lineEdit.setPlaceholderText(_translate("Main", "Имя файла"))
         self.pushButton.setText(_translate("Main", "Выбрать"))
         self.pushButton_2.setText(_translate("Main", "Шифровать"))
@@ -96,7 +91,7 @@ class Ui_Main(object):
 
     def runCreate(self):
         self.Threading = ThreadClass()
-        ms_box(AppName, "Производиться создание ключа, пожалуйста ожидайте", "info",detail="Иногда проверяйте файл")
+        ms_box(APP_NAME, "Производиться создание ключа, пожалуйста ожидайте", "info", "Иногда проверяйте файл")
         self.Threading.start()
 
 class Ui_Name(object):
@@ -104,13 +99,13 @@ class Ui_Name(object):
         Name.resize(200, 90)
         Name.setMinimumSize(QtCore.QSize(200, 90))
         Name.setMaximumSize(QtCore.QSize(200, 90))
-        Name.setStyleSheet("background-color: rgb(0, 0, 0);")
+        Name.setStyleSheet("QDialog{background-color: rgb(0, 0, 0);}"
+                           "QPushButton{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: 2px;border-radius: 3px;}"
+                           "QLineEdit{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: rgb(255, 85, 0); border-radius: 3px;selection-color: rgb(0, 0, 0); selection-background-color: rgb(255, 85, 0);}")
         self.lineEdit = QtWidgets.QLineEdit(Name)
         self.lineEdit.setGeometry(QtCore.QRect(0, 10, 201, 32))
-        self.lineEdit.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton = QtWidgets.QPushButton(Name)
         self.pushButton.setGeometry(QtCore.QRect(55, 50, 88, 34))
-        self.pushButton.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.retranslateUi(Name)
         QtCore.QMetaObject.connectSlotsByName(Name)
 
@@ -125,37 +120,34 @@ class Ui_Settings(object):
         Settings.resize(190, 255)
         Settings.setMinimumSize(QtCore.QSize(190, 255))
         Settings.setMaximumSize(QtCore.QSize(190, 255))
-        Settings.setStyleSheet("background-color: black")
+        Settings.setStyleSheet("QDialog{background-color: rgb(0, 0, 0);}"
+                               "QPushButton{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: 2px;border-radius: 3px;}"
+                               "QRadioButton{color: rgb(255, 85, 0);background-color: rgb(0, 0, 0);}"
+                               "QRadioButton::indicator::checked{color: rgb(255, 85, 0);}"
+                               "QCheckBox{color: rgb(255, 85, 0);background-color: rgb(0, 0, 0);}"
+                               "QCheckBox::indicator::checked{color: rgb(255, 85, 0);}")
         self.verticalLayoutWidget = QtWidgets.QWidget(Settings)
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(0, 10, 191, 206))
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.radioButton = QtWidgets.QRadioButton(self.verticalLayoutWidget)
-        self.radioButton.setStyleSheet("color: rgb(255, 62, 0);")
         self.radioButton.setChecked(True)
         self.verticalLayout.addWidget(self.radioButton)
         self.radioButton_2 = QtWidgets.QRadioButton(self.verticalLayoutWidget)
-        self.radioButton_2.setStyleSheet("color: rgb(255, 62, 0);")
         self.verticalLayout.addWidget(self.radioButton_2)
         self.checkBox = QtWidgets.QCheckBox(self.verticalLayoutWidget)
-        self.checkBox.setStyleSheet("color: rgb(255, 62, 0);")
         self.verticalLayout.addWidget(self.checkBox)
         self.checkBox_2 = QtWidgets.QCheckBox(self.verticalLayoutWidget)
-        self.checkBox_2.setStyleSheet("color: rgb(255, 62, 0);")
         self.verticalLayout.addWidget(self.checkBox_2)
         self.checkBox_3 = QtWidgets.QCheckBox(self.verticalLayoutWidget)
-        self.checkBox_3.setStyleSheet("color: rgb(255, 62, 0);")
         self.verticalLayout.addWidget(self.checkBox_3)
         self.checkBox_4 = QtWidgets.QCheckBox(self.verticalLayoutWidget)
-        self.checkBox_4.setStyleSheet("color: rgb(255, 62, 0);")
         self.verticalLayout.addWidget(self.checkBox_4)
         self.ChWrite = QtWidgets.QCheckBox(self.verticalLayoutWidget)
-        self.ChWrite.setStyleSheet("color: rgb(255, 62, 0);")
         self.ChWrite.setEnabled(False)
         self.verticalLayout.addWidget(self.ChWrite)
         self.pushButton = QtWidgets.QPushButton(Settings)
         self.pushButton.setGeometry(QtCore.QRect(5, 220, 180, 31))
-        self.pushButton.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.retranslateUi(Settings)
         QtCore.QMetaObject.connectSlotsByName(Settings)
 
@@ -177,47 +169,40 @@ class Ui_Dialog(object):
         Dialog.setMinimumSize(QtCore.QSize(647, 190))
         Dialog.setMaximumSize(QtCore.QSize(647, 190))
         Dialog.setWindowIcon(QtGui.QIcon("/home/darkpydeu/Изображения/Lock.ico"))
-        Dialog.setStyleSheet("background-color: rgb(0, 0, 0);")
+        Dialog.setStyleSheet("QDialog{background-color: rgb(0, 0, 0);}"
+                             "QPushButton{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: 2px;border-radius: 3px;}"
+                             "QLineEdit{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: rgb(255, 85, 0); border-radius: 3px;selection-color: rgb(0, 0, 0); selection-background-color: rgb(255, 85, 0);}"
+                             "QGroupBox{background-color: rgb(0, 0, 0);}")
         self.lineEdit = QtWidgets.QLineEdit(Dialog)
         self.lineEdit.setGeometry(QtCore.QRect(8, 9, 540, 35))
-        self.lineEdit.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.lineEdit.setReadOnly(True)
         self.pushButton = QtWidgets.QPushButton(Dialog)
         self.pushButton.setGeometry(QtCore.QRect(550, 9, 88, 35))
-        self.pushButton.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_2 = QtWidgets.QPushButton(Dialog)
         self.pushButton_2.setGeometry(QtCore.QRect(507, 150, 132, 35))
-        self.pushButton_2.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.groupBox = QtWidgets.QGroupBox(Dialog)
         self.groupBox.setGeometry(QtCore.QRect(8, 50, 631, 91))
-        self.groupBox.setStyleSheet("background-color: rgb(0, 0, 0);")
         self.groupBox.setTitle("")
         self.pushButton_3 = QtWidgets.QPushButton(self.groupBox)
         self.pushButton_3.setGeometry(QtCore.QRect(515, 50, 110, 34))
-        self.pushButton_3.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.lineEdit_2 = QtWidgets.QLineEdit(self.groupBox)
         self.lineEdit_2.setGeometry(QtCore.QRect(0, 10, 631, 35))
-        self.lineEdit_2.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.lineEdit_3 = QtWidgets.QLineEdit(self.groupBox)
         self.lineEdit_3.setGeometry(QtCore.QRect(412, 50, 101, 34))
-        self.lineEdit_3.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.lineEdit_3.setToolTip("Длина пароля в символах\nБайт = 1 символ")
         self.pushButton_4 = QtWidgets.QPushButton(Dialog)
         self.pushButton_4.setGeometry(QtCore.QRect(417, 150, 88, 35))
-        self.pushButton_4.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_5 = QtWidgets.QPushButton(Dialog)
         self.pushButton_5.setGeometry(QtCore.QRect(327, 150, 88, 35))
-        self.pushButton_5.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.pushButton_5.setEnabled(False)
         self.pushButton_6 = QtWidgets.QPushButton(Dialog)
         self.pushButton_6.setGeometry(QtCore.QRect(9, 150, 50, 35))
-        self.pushButton_6.setStyleSheet("color: rgb(255, 85, 0); background-color: rgb(39, 39, 39);")
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "DarkCryptorAES"))
+        Dialog.setWindowTitle(_translate("Dialog", f"{APP_NAME}AES"))
         self.lineEdit.setPlaceholderText(_translate("Dialog", "Имя файла"))
         self.pushButton.setText(_translate("Dialog", "Выбрать"))
         self.pushButton_2.setText(_translate("Dialog", "Шифровать"))
@@ -233,42 +218,35 @@ class Ui_StartMenu(object):
         StartMenu.resize(200, 175)
         StartMenu.setMinimumSize(QtCore.QSize(200, 175))
         StartMenu.setMaximumSize(QtCore.QSize(200, 175))
-        StartMenu.setStyleSheet("background-color: rgb(0, 0, 0);")
+        StartMenu.setStyleSheet("QDialog{background-color: rgb(0, 0, 0);}"
+                                "QFrame{background-color: black; border-radius: 15px}"
+                                "QPushButton{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: 2px;border-radius: 3px;}")
         self.frame = QtWidgets.QFrame(StartMenu)
         self.frame.setGeometry(QtCore.QRect(0, 0, 200, 175))
-        self.frame.setStyleSheet("background-color: black; border-radius: 15px")
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.BlowFish = QtWidgets.QPushButton(StartMenu)
-        self.BlowFish.setGeometry(QtCore.QRect(10, 50, 145, 35))
-        self.BlowFish.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.BlowFish.setGeometry(QtCore.QRect(10, 50, 140, 35))
         self.AES = QtWidgets.QPushButton(StartMenu)
-        self.AES.setGeometry(QtCore.QRect(10, 10, 145, 35))
-        self.AES.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.AES.setGeometry(QtCore.QRect(10, 10, 140, 35))
         self.RSA = QtWidgets.QPushButton(StartMenu)
-        self.RSA.setGeometry(QtCore.QRect(10, 90, 145, 35))
-        self.RSA.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.RSA.setGeometry(QtCore.QRect(10, 90, 140, 35))
         self.AESinfo = QtWidgets.QPushButton(StartMenu)
         self.AESinfo.setGeometry(QtCore.QRect(155, 10, 35, 35))
-        self.AESinfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.BlowFishInfo = QtWidgets.QPushButton(StartMenu)
         self.BlowFishInfo.setGeometry(QtCore.QRect(155, 50, 35, 35))
-        self.BlowFishInfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.RSAinfo = QtWidgets.QPushButton(StartMenu)
         self.RSAinfo.setGeometry(QtCore.QRect(155, 90, 35, 35))
-        self.RSAinfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.Steganography = QtWidgets.QPushButton(StartMenu)
-        self.Steganography.setGeometry(QtCore.QRect(10, 130, 145, 35))
-        self.Steganography.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
+        self.Steganography.setGeometry(QtCore.QRect(10, 130, 140, 35))
         self.SteganoInfo = QtWidgets.QPushButton(StartMenu)
         self.SteganoInfo.setGeometry(QtCore.QRect(155, 130, 35, 35))
-        self.SteganoInfo.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.retranslateUi(StartMenu)
         QtCore.QMetaObject.connectSlotsByName(StartMenu)
 
     def retranslateUi(self, StartMenu):
         _translate = QtCore.QCoreApplication.translate
-        StartMenu.setWindowTitle(_translate("StartMenu", "DarkCryptor Start"))
+        StartMenu.setWindowTitle(_translate("StartMenu", f"{APP_NAME} Start"))
         StartMenu.setWindowFlag(QtCore.Qt.FramelessWindowHint)
         StartMenu.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.BlowFish.setText(_translate("StartMenu", "BlowFish"))
@@ -285,50 +263,41 @@ class Ui_Stegano(object):
         Stegano.resize(1101, 625)
         Stegano.setMinimumSize(QtCore.QSize(1101, 625))
         Stegano.setMaximumSize(QtCore.QSize(1101, 625))
-        Stegano.setStyleSheet("background-color: black;")
+        Stegano.setStyleSheet("QDialog{background-color: black;}"
+                              "QPlainTextEdit{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border-radius: 3px; selection-color: rgb(0, 0, 0); selection-background-color: rgb(255, 85, 0);}"
+                              "QLineEdit{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: rgb(255, 85, 0); border-radius: 3px;selection-color: rgb(0, 0, 0); selection-background-color: rgb(255, 85, 0);}"
+                              "QPushButton{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: 2px;border-radius: 3px;}")
         self.PlainTextDecrypted = QtWidgets.QPlainTextEdit(Stegano)
         self.PlainTextDecrypted.setGeometry(QtCore.QRect(5, 5, 561, 616))
-        self.PlainTextDecrypted.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.ImageLine = QtWidgets.QLineEdit(Stegano)
         self.ImageLine.setGeometry(QtCore.QRect(570, 5, 440, 35))
-        self.ImageLine.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.ImageLine.setReadOnly(True)
         self.TakeImage = QtWidgets.QPushButton(Stegano)
         self.TakeImage.setGeometry(QtCore.QRect(1012, 5, 88, 35))
-        self.TakeImage.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.PasswordLine = QtWidgets.QLineEdit(Stegano)
         self.PasswordLine.setGeometry(QtCore.QRect(570, 42, 529, 35))
-        self.PasswordLine.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.PlainTextToEncrypt = QtWidgets.QPlainTextEdit(Stegano)
         self.PlainTextToEncrypt.setGeometry(QtCore.QRect(570, 80, 526, 501))
-        self.PlainTextToEncrypt.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.S = QtWidgets.QPushButton(Stegano)
         self.S.setGeometry(QtCore.QRect(570, 585, 100, 35))
-        self.S.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.pushButton_3 = QtWidgets.QPushButton(Stegano)
         self.pushButton_3.setGeometry(QtCore.QRect(987, 585, 111, 35))
-        self.pushButton_3.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.ImageLine_2 = QtWidgets.QLineEdit(Stegano)
         self.ImageLine_2.setGeometry(QtCore.QRect(570, 80, 440, 35))
-        self.ImageLine_2.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.ImageLine_2.setReadOnly(True)
         self.ImageLine_2.hide()
         self.TakeImage_2 = QtWidgets.QPushButton(Stegano)
         self.TakeImage_2.setGeometry(QtCore.QRect(1012, 80, 88, 35))
-        self.TakeImage_2.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.TakeImage_2.hide()
         self.PasswordLineNE = QtWidgets.QLineEdit(Stegano)
         self.PasswordLineNE.setGeometry(QtCore.QRect(570, 120, 440, 35))
-        self.PasswordLineNE.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.PasswordLineNE.setReadOnly(True)
         self.PasswordLineNE.hide()
         self.TakePasswordNE = QtWidgets.QPushButton(Stegano)
         self.TakePasswordNE.setGeometry(QtCore.QRect(1012, 120, 88, 35))
-        self.TakePasswordNE.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.TakePasswordNE.hide()
         self.pushButton_4 = QtWidgets.QPushButton(Stegano)
         self.pushButton_4.setGeometry(QtCore.QRect(671, 585, 50, 35))
-        self.pushButton_4.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.retranslateUi(Stegano)
         QtCore.QMetaObject.connectSlotsByName(Stegano)
 
@@ -354,16 +323,16 @@ class Ui_StegSett(object):
         StegSett.resize(170, 95)
         StegSett.setMinimumSize(QtCore.QSize(170, 95))
         StegSett.setMaximumSize(QtCore.QSize(170, 95))
-        StegSett.setStyleSheet("background-color: black;")
+        StegSett.setStyleSheet("QDialog{background-color: black;}"
+                               "QRadioButton{color: rgb(255, 85, 0);background-color: rgb(0, 0, 0);}"
+                               "QRadioButton::indicator::checked{color: rgb(255, 85, 0);}"
+                               "QPushButton{color: rgb(255, 85, 0);background-color: rgb(39, 39, 39);border: 2px;border-radius: 3px;}")
         self.EncryptButn = QtWidgets.QRadioButton(StegSett)
         self.EncryptButn.setGeometry(QtCore.QRect(0, 5, 171, 24))
-        self.EncryptButn.setStyleSheet("color: rgb(255, 62, 0);")
         self.DecryptButn = QtWidgets.QRadioButton(StegSett)
         self.DecryptButn.setGeometry(QtCore.QRect(0, 30, 171, 24))
-        self.DecryptButn.setStyleSheet("color: rgb(255, 62, 0);")
         self.pushButton = QtWidgets.QPushButton(StegSett)
         self.pushButton.setGeometry(QtCore.QRect(5, 60, 161, 31))
-        self.pushButton.setStyleSheet("background-color: rgb(51, 51, 51);color: rgb(255, 62, 0);")
         self.retranslateUi(StegSett)
         QtCore.QMetaObject.connectSlotsByName(StegSett)
 
@@ -383,27 +352,26 @@ class ThreadClass(QtCore.QThread):
 
 def create_key():
     bits = mn.lineEdit_3.text()
-    keys = RSA.generate(int(bits))
+    _keys = RSA.generate(int(bits))
     keys_dir = "rsa"
     if not os.path.exists(keys_dir):
         os.mkdir(keys_dir)
     with open(f"{keys_dir}/public.rsa", "wb") as pub, open(f"{keys_dir}/private.rsa", "wb") as priv:
-        pub.write(keys.publickey().exportKey('PEM'))
-        priv.write(keys.export_key('PEM'))
+        pub.write(_keys.publickey().exportKey('PEM'))
+        priv.write(_keys.export_key('PEM'))
 
-def getpassword():
+def get_password():
     try:
-        kolvo = int(ui.lineEdit_3.text())
-        oneBytes= ["q","w","e","r","t","y","u","i","o","p","Z","X","C","V","B","a","s","d","f","g","h","j","k","l","N","M","z","x","c","v","b","n","m","1",
-           "2","3","Q","W","E","R","T","Y","U","I","O","P","4","5","A","S","D","F","G","H","J","K","L","6",'7',"8","9","0","(",")",'"',"'","-","_","=","+",
-           "!","@","#","$","%","^","&","*","№",";",":","?",".",",","`","~"]
         bytesText = ""
-        for i in range(0, kolvo):
-            shuffle(oneBytes)
-            bytesText += oneBytes[0]
+        kolvo = int(ui.lineEdit_3.text())
+        for i in range(kolvo//4):
+            bytesText += choice(ascii_letters)
+            bytesText += choice(digits)
+            bytesText += choice(hexdigits)
+            bytesText += choice(punctuation)
         ui.lineEdit_2.setText(bytesText)
     except:
-        ms_box(AppName, "Введите число байтов в пароле", "info", information="байт = 1 символ")
+        ms_box(APP_NAME, "Введите число байтов в пароле", "info", information="байт = 1 символ ( Цифры )")
 
 def settings_save(choice: bool):
     if choice: # AES | BlowFish
@@ -432,7 +400,6 @@ def settings_save(choice: bool):
             mn.pushButton_5.setEnabled(True)
         else:
             mn.pushButton_5.setEnabled(False)
-        SettingsDialog.close()
     SettingsDialog.close()
 
 def encrypt_blow(dirCrypt=False):
@@ -447,15 +414,15 @@ def encrypt_blow(dirCrypt=False):
             with open(file, "r") as f:
                 readFileText = f.read()
             if st.checkBox_2.isChecked():
-                savepass = open("CCSavePass.txt", "w")
-                if name != "" and name != None:
-                    savepass.write(f"\n {name} ::: {password}")
+                savepass = open("DCSavePass.txt", "a")
+                if name != "" and None:
+                    savepass.write(f"\n {name} ::: {password} // BlowFish")
                 else:
-                    savepass.write(f"\n {file}.DC ::: {password}")
+                    savepass.write(f"\n {file}.DC ::: {password} // BlowFish")
                 savepass.close()
             plaintext = Padding.pad(bytes(readFileText.encode()), 1000, "iso7816")
             msg = iv + cipher.encrypt(plaintext)
-            if name != '' and name != None:
+            if name != '' and None:
                 fullPath = os.path.join(directory, name)
             else:
                 fullPath = os.path.join(directory, str(file) + ".DC")
@@ -468,10 +435,10 @@ def encrypt_blow(dirCrypt=False):
                 name = ""
             if not st.checkBox_4.isChecked():
                 os.remove(str(file))
-            ms_box(AppName, "Done!", "info")
+            ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_box(AppName, str(exp), "err")
+            ms_box(APP_NAME, str(exp), "err")
 
 def decrypt_blow(dirCrypt=False):
     global name
@@ -486,7 +453,7 @@ def decrypt_blow(dirCrypt=False):
         ciphertext = ciphertext[bs:]
         cipher = Blowfish.new(key, Blowfish.MODE_EAX, iv)
         msg = Padding.unpad(cipher.decrypt(ciphertext), 1000, "iso7816")
-        if name != '' and name != None:
+        if name != '' and None:
             fullPath = os.path.join(directory, str(name))
         else:
             fullPath = os.path.join(directory, str(os.path.splitext(str(file))[0]))
@@ -499,10 +466,10 @@ def decrypt_blow(dirCrypt=False):
             ui.lineEdit_2.clear()
             nm.lineEdit.clear()
             name = ""
-            ms_box(AppName, "Done!", "info")
+            ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_box(AppName, str(exp), "err")
+            ms_box(APP_NAME, str(exp), "err")
 
 def encrypt_image():
     global keys
@@ -559,7 +526,7 @@ def decrypt_image():
             cipher = Fernet(Key)
         with open(decFile, "r") as fOut:
             y = str([line.strip() for line in fOut])
-            os.remove(decFile)
+        os.remove(decFile)
         for i in range(len(findall(r'\((\d+)\,', y))):
             keys.append((int(findall(r'\((\d+)\,', y)[i]), int(findall(r'\,\s(\d+)\)', y)[i])))
         for key in keys:
@@ -578,17 +545,17 @@ def encryptUi(dirCrypt=False):
     global name
     try:
         password = ui.lineEdit_2.text()
-        if name != '' and name != None:
+        if name != '' and None:
             fullPath = os.path.join(directory, name)
         else:
             fullPath = os.path.join(directory, str(file) + ".DC")
         encryptFile(str(file), fullPath, password, bufferSize)
         if st.checkBox_2.isChecked():
-            savepass = open("CCSavePass.txt", "w")
-            if name != "" and name != None:
-                savepass.write(f"\n {name} ::: {password}")
+            savepass = open("DCSavePass.txt", "a")
+            if name != "" and None:
+                savepass.write(f"\n {name} ::: {password} // AES")
             else:
-                savepass.write(f"\n {file}.DC ::: {password}")
+                savepass.write(f"\n {file}.DC ::: {password} // AES")
             savepass.close()
         if not st.checkBox_4.isChecked():
             os.remove(str(file))
@@ -597,16 +564,16 @@ def encryptUi(dirCrypt=False):
             ui.lineEdit_2.clear()
             nm.lineEdit.clear()
             name = ""
-            ms_box(AppName, "Done!", "info")
+            ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_box(AppName, str(exp), "err")
+            ms_box(APP_NAME, str(exp), "err")
 
 def decryptUi(dirCrypt=False):
     global name
     try:
         passworded = ui.lineEdit_2.text()
-        if name != '' and name != None:
+        if name != '' and None:
             fullPath = os.path.join(directory, str(name))
         else:
             fullPath = os.path.join(directory, str(os.path.splitext(str(file))[0]))
@@ -618,10 +585,10 @@ def decryptUi(dirCrypt=False):
             ui.lineEdit.clear()
             ui.lineEdit_2.clear()
             name = ""
-            ms_box(AppName, "Done!", "info")
+            ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_box(AppName, str(exp), "err")
+            ms_box(APP_NAME, str(exp), "err")
 
 def encrypt(dirCrypt=False):
     global name
@@ -629,20 +596,20 @@ def encrypt(dirCrypt=False):
         with open(file, "rb") as fil:
             crypt = fil.read()
             rsa_public_key = RSA.importKey(publicKey)
-            rsa_public_key = PKCS1_OAEP.new(rsa_public_key)
-            encrypted_file = rsa_public_key.encrypt(crypt)
-            if name != '' and name != None:
+            cipher = PKCS1_OAEP.new(rsa_public_key)
+            encrypted_file = cipher.encrypt(crypt)
+            if name != '' and None:
                 encrypted_file_name = os.path.join(directory, str(name))
             else:
                 encrypted_file_name = os.path.join(directory, f"{file}.DC")
             with open(encrypted_file_name, "wb") as encryFile:
                 encryFile.write(encrypted_file)
             if st.checkBox_2.isChecked():
-                savepass = open("CCSavePass.txt", "w")
-                if name != "" and name != None:
-                    savepass.write(f"\n {name} ::: политика не одобраяет")
+                savepass = open("DCSavePass.txt", "a")
+                if name != "" and None:
+                    savepass.write(f"\n {name} ::: {rsa_public_key.size_in_bits()} // RSA")
                 else:
-                    savepass.write(f"\n {file}.CC ::: политика не одобраяет")
+                    savepass.write(f"\n {file}.CC ::: {rsa_public_key.size_in_bits()} // RSA")
                 savepass.close()
             if not st.checkBox_4.isChecked():
                 os.remove(str(file))
@@ -650,10 +617,14 @@ def encrypt(dirCrypt=False):
             mn.lineEdit.clear()
             nm.lineEdit.clear()
             name = ""
-            ms_box(AppName, "Done!", "info")
+            ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_box(AppName, str(exp), "err")
+            info = None
+            if str(exp) == "Plaintext is too long.":
+                exp = "Ключ мал для данного файла"
+                info = f"Попробуйте сгенерировать ключ {rsa_public_key.size_in_bits() + 1024}"
+            ms_box(APP_NAME, str(exp), "err", info)
 
 def decrypt(dirCrypt=False):
     global name
@@ -663,7 +634,7 @@ def decrypt(dirCrypt=False):
             rsa_private_key = RSA.importKey(privateKey)
             rsa_private_key = PKCS1_OAEP.new(rsa_private_key)
             decrypted_text = rsa_private_key.decrypt(crypted)
-            if name != '' and name != None:
+            if name != '' and None:
                 decrypted_file_name = os.path.join(directory, str(name))
             else:
                 decrypted_file_name = os.path.join(directory, str(os.path.splitext(str(file))[0]))
@@ -675,10 +646,10 @@ def decrypt(dirCrypt=False):
             mn.lineEdit.clear()
             nm.lineEdit.clear()
             name = ""
-            ms_box(AppName, "Done!", "info")
+            ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
         if not dirCrypt:
-            ms_box(AppName, str(exp), "err")
+            ms_box(APP_NAME, str(exp), "err")
 
 def decrypt_dir():
     global file, name
@@ -691,9 +662,9 @@ def decrypt_dir():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_box(AppName, "Done!", "info")
+        ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
-        ms_box(AppName, str(exp), "err")
+        ms_box(APP_NAME, str(exp), "err")
 
 def encrypt_dir():
     global file, name
@@ -706,9 +677,9 @@ def encrypt_dir():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_box(AppName, "Done!", "info")
+        ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
-        ms_box(AppName, str(exp), "err")
+        ms_box(APP_NAME, str(exp), "err")
 
 def decrypt_dirUi():
     global file, name
@@ -722,9 +693,9 @@ def decrypt_dirUi():
         ui.lineEdit.clear()
         ui.lineEdit_2.clear()
         name = ""
-        ms_box(AppName, "Done!", "info")
+        ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
-        ms_box(AppName, str(exp), "err")
+        ms_box(APP_NAME, str(exp), "err")
 
 def encrypt_dirUi():
     global file, name
@@ -738,9 +709,9 @@ def encrypt_dirUi():
         ui.lineEdit.clear()
         ui.lineEdit_2.clear()
         name = ""
-        ms_box(AppName, "Done!", "info")
+        ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
-        ms_box(AppName, str(exp), "err")
+        ms_box(APP_NAME, str(exp), "err")
 
 def decrypt_dir_blow():
     global file, name
@@ -753,9 +724,9 @@ def decrypt_dir_blow():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_box(AppName, "Done!", "info")
+        ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
-        ms_box(AppName, str(exp), "err")
+        ms_box(APP_NAME, str(exp), "err")
 
 def encrypt_dir_blow():
     global file, name
@@ -768,9 +739,9 @@ def encrypt_dir_blow():
         mn.lineEdit.clear()
         nm.lineEdit.clear()
         name = ""
-        ms_box(AppName, "Done!", "info")
+        ms_box(APP_NAME, "Done!", "info")
     except Exception as exp:
-        ms_box(AppName, str(exp), "err")
+        ms_box(APP_NAME, str(exp), "err")
 
 def btn_crypt(choice: bool):
     if choice: # AES | BlowFish
@@ -831,7 +802,7 @@ def qtOpen(choice=True):
         a = QtWidgets.QFileDialog.getExistingDirectory()
     return a
 
-def takefile(choice=0):
+def takeFile(choice=0):
     global file, directory
     try:
         file = qtOpen()
@@ -847,9 +818,9 @@ def takefile(choice=0):
         elif choice == 4: # файловый пароль не читабельный
             steg.PasswordLineNE.setText(file)
     except:
-        ms_box(AppName, "Файл не выбран", "war")
+        ms_box(APP_NAME, "Файл не выбран", "war")
 
-def takedir(choice: bool):
+def takeDir(choice: bool):
     global directory
     try:
         directory = qtOpen(False)
@@ -858,7 +829,7 @@ def takedir(choice: bool):
         elif not choice: # Cipher
             ui.lineEdit.setText(directory)
     except:
-        ms_box(AppName, "Файл не выбран", "war")
+        ms_box(APP_NAME, "Файл не выбран", "war")
 
 def saveName():
     global name
@@ -890,10 +861,10 @@ def take_public():
         with open(pub, "rb") as publ:
             publicKey = publ.read()
         if not "PUBLIC" in publicKey.decode("utf-8"):
-            ms_box(AppName, "Выбран не тот файл!", "war")
+            ms_box(APP_NAME, "Выбран не тот файл!", "war")
             publicKey = ""
     except:
-        ms_box(AppName, "Файл не выбран", "war")
+        ms_box(APP_NAME, "Файл не выбран", "war")
 
 def take_private():
     global privateKey
@@ -902,28 +873,28 @@ def take_private():
         with open(priv, "rb") as priva:
             privateKey = priva.read()
         if not "PRIVATE" in privateKey.decode("utf-8"):
-            ms_box(AppName, "Выбран не тот файл", "war")
+            ms_box(APP_NAME, "Выбран не тот файл", "war")
             privateKey = ""
     except:
-        ms_box(AppName, "Файл не выбран", "war")
+        ms_box(APP_NAME, "Файл не выбран", "war")
 
-def takebtn(choice: int):
+def takeBtn(choice: int):
     if choice:
         if st.checkBox.isChecked():
-            takedir(True)
+            takeDir(True)
         else:
-            takefile(0)
+            takeFile(0)
     elif not choice:
         if st.checkBox.isChecked():
-            takedir(False)
+            takeDir(False)
         else:
-            takefile(1)
+            takeFile(1)
 
 def rename():
     if st.checkBox_3.isChecked():
         NameDialog.show()
     else:
-        ms_box(AppName, "Чтобы работало изменения имени файла включите его в настройках", "info")
+        ms_box(APP_NAME, "Чтобы работало изменения имени файла включите его в настройках", "info")
 
 def choice_settings_save():
     if choiceSettings == 1:
@@ -1001,7 +972,7 @@ if __name__ == '__main__':
     Start.show()
     mn.pushButton_7.clicked.connect(take_private)
     mn.pushButton_6.clicked.connect(take_public)
-    mn.pushButton.clicked.connect(lambda: takebtn(True))
+    mn.pushButton.clicked.connect(lambda: takeBtn(True))
     mn.pushButton_5.clicked.connect(lambda: NameDialog.show())
     mn.pushButton_2.clicked.connect(lambda: btn_crypt(False))
     mn.pushButton_4.clicked.connect(lambda: SettingsDialog.show())
@@ -1017,17 +988,17 @@ if __name__ == '__main__':
     start.SteganoInfo.clicked.connect(lambda: showInfo("Steganography"))
     start.Steganography.clicked.connect(lambda: openWind(3))
     st.pushButton.clicked.connect(choice_settings_save)
-    ui.pushButton.clicked.connect(lambda: takebtn(False))
-    ui.pushButton_3.clicked.connect(getpassword)
+    ui.pushButton.clicked.connect(lambda: takeBtn(False))
+    ui.pushButton_3.clicked.connect(get_password)
     ui.pushButton_5.clicked.connect(lambda: NameDialog.show())
     ui.pushButton_2.clicked.connect(lambda: btn_crypt(True))
     ui.pushButton_4.clicked.connect(lambda: SettingsDialog.show())
     ui.pushButton_6.clicked.connect(lambda: back("cipher"))
-    steg.TakeImage.clicked.connect(lambda: takefile(2))
-    steg.TakeImage_2.clicked.connect(lambda: takefile(3))
+    steg.TakeImage.clicked.connect(lambda: takeFile(2))
+    steg.TakeImage_2.clicked.connect(lambda: takeFile(3))
     steg.pushButton_3.clicked.connect(lambda: CryptButton_steg(steg.pushButton_3.text()))
     steg.S.clicked.connect(lambda: StegSettDial.show())
-    steg.TakePasswordNE.clicked.connect(lambda: takefile(4))
+    steg.TakePasswordNE.clicked.connect(lambda: takeFile(4))
     steg.pushButton_4.clicked.connect(lambda: back("steg"))
     stegS.pushButton.clicked.connect(settings_Save_Steg)
 
