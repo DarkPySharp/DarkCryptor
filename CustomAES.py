@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from os import urandom
 from os import stat, remove, path
 
-version = "1.0.0"
+version = "2.0.0"
 bufferSizeDef = 64 * 1024
 maxPassLen = 1024
 AESBlockSize = 16
